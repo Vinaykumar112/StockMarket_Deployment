@@ -10,7 +10,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # loading the Model
-forecast_model = pickle.load(open('forecast_holt_winter_mul.pkl','rb'))
+forecast_model = pickle.load(open('C:/Users/vinis/Stock_Market_deployment/forecast_holt_winter_mul.pkl','rb'))
 
 # print title of web app
 st.title("Stock Market Analysis and Prediction")
@@ -19,7 +19,7 @@ st.title("Stock Market Analysis and Prediction")
 data_load_state = st.text('Loading data...')
 
 # Reading the Stock Data
-data=pd.read_csv("Tata_Motors_stock.csv")
+data=pd.read_csv("C:/Users/vinis/Stock_Market_deployment/Tata_Motors_stock.csv")
 
 data['Date'] = pd.to_datetime(data['Date'])
 data['Symbol'] = data['Symbol'].astype('category')
