@@ -1,23 +1,29 @@
-
-# load library
-import streamlit as st
 import pandas as pd
-from statsmodels.tsa.holtwinters import  ExponentialSmoothing
 import matplotlib.pyplot as plt
+# %matplotlib inline
+import seaborn as sns
+sns.set()
+
+import streamlit as st
+import pickle
+import warnings
+warnings.filterwarnings('ignore')
+
+# loading the Model
+forecast_model = pickle.load(open('forecast_holt_winter_mul.pkl','rb'))
 
 # print title of web app
 st.title("Stock Market Analysis and Prediction")
-dataset = ('Tata_Motors_stock','Wipro_stock','SBI_stock')
-option = st.selectbox('Select dataset for prediction',dataset)
-DATA_URL =("C:/Users/vinis/Stock_Market_Analysis/"+option+'.csv')
 
-def load_data():
-    data = pd.read_csv(DATA_URL)
-    data.reset_index(inplace=True)
-    return data
-
+# Create a text element and let the reader know the data is loading.
 data_load_state = st.text('Loading data...')
-data=load_data()
+
+# Reading the Stock Data
+data=pd.read_csv("Tata_Motors_stock.csv")
+
+data['Date'] = pd.to_datetime(data['Date'])
+data['Symbol'] = data['Symbol'].astype('category')
+data['Series'] = data['Series'].astype('category')
 
 # Notify the reader that the data was successfully loaded.
 data_load_state.text('Loading data...done!')
@@ -27,67 +33,43 @@ if st.checkbox('Show data'):
     st.subheader('Data from 2012 - 2022')
     st.write(data)
 
-
 # dislay graph of open and close column
 st.subheader('Graph of Close & Open:-')
+fig = plt.figure(figsize = (20,7))
 st.line_chart(data[["Open","Close"]])
-
-
+st.pyplot(fig)
 
 # display plot of volume column in datasets
-#st.subheader('Graph of Volume:-')
-#st.line_chart(data['Volume'])
-
-#st.subheader('Closing Price vs Time chart')
-#fig = plt.figure(figsize = (12,6))
-#plt.plot(data.Close)
-#st.pyplot(fig)
-
-st.subheader('Closing Price vs Time chart with 100MA')
-ma100 = data.Close.rolling(100).mean()
-fig = plt.figure(figsize = (12,6))
-plt.plot(ma100)
-plt.plot(data.Close)
+st.subheader('Graph of Volume:-')
+fig = plt.figure(figsize = (20,7))
+st.line_chart(data['Volume'])
 st.pyplot(fig)
 
-st.subheader('Closing Price vs Time chart with 100MA and 200MA')
-ma100 = data.Close.rolling(100).mean()
-ma200 = data.Close.rolling(200).mean()
-fig = plt.figure(figsize = (12,6))
-plt.plot(ma100, 'r')
-plt.plot(ma200, 'g')
-plt.plot(data.Close,'b')
+# displaying time vs Closing Price
+st.subheader('Closing Price vs Time chart')
+fig = plt.figure(figsize = (20,7))
+st.line_chart(data['Close'])
 st.pyplot(fig)
 
-x = int(len(data)*0.8)
-train_data = data['Close'][0:x]
-test_data = data['Close'][x:]
+# Decomposition of Time Series Data
+#st.subheader('Decomposition of Time Series Data')
+# time_components_365 = seasonal_decompose(data['Close'], period= 365, model = 'additive')
+# st.line_chart(time_components_365)
 
-winter_model_mul = ExponentialSmoothing(train_data,seasonal='mul', trend='mul', seasonal_periods= 365).fit()
-winter_predict_mul = winter_model_mul.predict(start = test_data.index[0], end = test_data.index[-1] )
- 
-
-
-st.subheader('Prediction vs Orginal')
-fig2 = plt.figure(figsize = (12,6))
-plt.plot(test_data,'b',Label = 'Orginal Price')
-plt.plot(winter_predict_mul,'r',Label = 'Predicted Price')
-plt.xlabel('Time')
-plt.ylabel('Price')
-plt.legend()
-st.pyplot(fig2)
-
-forecast_model = ExponentialSmoothing(data['Close'], seasonal='mul',trend ='mul', seasonal_periods=365).fit()
-forecast_model.forecast(100)
+st.subheader('Closing Price vs Time chart with 365MA')
+fig = plt.figure(figsize = (20,7))
+plt.plot(data['Close'])
+data['Close'].rolling(365).mean().plot(label= 'MA 365' )
+st.pyplot(fig)
 
 st.subheader('Forecast for Next 100 Days')
-fig3 = plt.figure(figsize=(12,6))
+fig = plt.figure(figsize=(20,8))
 data['Close'].plot(label = 'Original Series')
 forecast_model.forecast(100).plot(label='Forecast for Next 100 Days')
-plt.legend()
-st.pyplot(fig3)
+st.pyplot(fig)
 
-
-
-
-
+st.subheader('Original Vs Predicted')
+fig = plt.figure(figsize=(20,8))
+data['Close'].plot(label = 'Original Share Price')
+forecast_model.predict(start= data['Close'].index[0],end = data['Close'].index[-1]).plot(label='Predicted Share price')
+st.pyplot(fig)
